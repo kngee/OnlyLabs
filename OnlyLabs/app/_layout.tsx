@@ -1,57 +1,54 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
+import { Colors } from '@/constants/Colours';
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const tintColor = colorScheme === 'dark' ? '#fff' : '#000';
+export default function TabLayout() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: tintColor,
-        headerShown: true,
-        headerTitleStyle: { fontWeight: '600' },
+        tabBarActiveTintColor: theme.accent,
+        tabBarInactiveTintColor: theme.tabIconDefault,
+        headerShown: false,
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
+          backgroundColor: theme.background, // Match screen color
+          borderTopWidth: 0, // Clean separation
+          height: 60,
+          paddingBottom: 10,
+          // Neumorphic tab bar effect (softly protruding)
+          shadowColor: theme.shadowDark,
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.2,
+          shadowRadius: 10,
+          elevation: 5,
         },
-        headerStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
-        },
-        headerTintColor: tintColor,
+        tabBarShowLabel: false, // Cleaner, like image_0.png
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'time' : 'time-outline'} size={24} color={color} />
+            <Ionicons name={focused ? 'time' : 'time-outline'} size={26} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="analytics"
         options={{
-          title: 'Analytics',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={24} color={color} />
+            <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={26} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="friends"
         options={{
-          title: 'Friends',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'people' : 'people-outline'} size={24} color={color} />
+            <Ionicons name={focused ? 'people' : 'people-outline'} size={26} color={color} />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="+not-found"
-        options={{
-          href: null,
-          title: 'Oops!',
         }}
       />
     </Tabs>

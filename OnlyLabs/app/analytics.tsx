@@ -1,112 +1,243 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import React from 'react';
+import { StyleSheet, useColorScheme, View, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NeumorphicView } from '@/components/NeuromorphicView';
+import { Colors } from '@/constants/Colours';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function TabTwoScreen() {
+const weeklyData = [
+  { day: 'M', hours: 4.5, active: true },
+  { day: 'T', hours: 3.2, active: true },
+  { day: 'W', hours: 5.0, active: true },
+  { day: 'T', hours: 0, active: false },
+  { day: 'F', hours: 2.1, active: true },
+  { day: 'S', hours: 6.5, active: true },
+  { day: 'S', hours: 0, active: false },
+];
+
+export default function AnalyticsScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
+  const maxHours = Math.max(...weeklyData.map(d => d.hours), 1);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        
+        {/* Header Section */}
+        <View style={styles.headerContainer}>
+          <ThemedText type="title" style={{ color: theme.text }}>Activity Logs</ThemedText>
+          <ThemedText style={{ color: theme.greyText, marginTop: 4 }}>This Week</ThemedText>
+        </View>
+
+        {/* Weekly Summary Widget */}
+        <NeumorphicView style={styles.summaryCard} level="convex">
+          <View style={styles.summaryHeader}>
+            <View>
+              <ThemedText style={styles.summaryTitle}>Total Focus Time</ThemedText>
+              <ThemedText style={[styles.summaryTime, { color: theme.text }]}>21h 18m</ThemedText>
+            </View>
+            <View style={[styles.iconContainer, { backgroundColor: theme.accent + '20' }]}>
+              <Ionicons name="flame" size={24} color={theme.accent} />
+            </View>
+          </View>
+
+          {/* Bar Chart */}
+          <View style={styles.chartContainer}>
+            {weeklyData.map((data, index) => {
+              const barHeight = data.active ? (data.hours / maxHours) * 100 : 0;
+              return (
+                <View key={index} style={styles.barWrapper}>
+                  <View style={styles.barBackground}>
+                    {data.active && (
+                      <View 
+                        style={[
+                          styles.barFill, 
+                          { height: `${barHeight}%`, backgroundColor: index === 5 ? theme.accent : theme.greyText }
+                        ]} 
+                      />
+                    )}
+                  </View>
+                  <ThemedText style={[styles.dayLabel, { color: index === 5 ? theme.accent : theme.greyText }]}>
+                    {data.day}
+                  </ThemedText>
+                </View>
+              );
+            })}
+          </View>
+        </NeumorphicView>
+
+        {/* Action / Monthly Calendar View Placeholder */}
+        <View style={styles.sectionHeader}>
+          <ThemedText type="defaultSemiBold" style={{ color: theme.text, fontSize: 18 }}>Monthly Trends</ThemedText>
+          <Ionicons name="chevron-forward" size={20} color={theme.greyText} />
+        </View>
+
+        <NeumorphicView style={styles.calendarCard} level="convex">
+          <View style={styles.calendarHeader}>
+            <ThemedText style={styles.monthText}>April 2026</ThemedText>
+            <View style={styles.calendarControls}>
+              <Ionicons name="chevron-back" size={20} color={theme.text} style={{ marginRight: 15 }} />
+              <Ionicons name="chevron-forward" size={20} color={theme.text} />
+            </View>
+          </View>
+          
+          <View style={styles.daysRow}>
+            {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day, i) => (
+              <ThemedText key={i} style={[styles.calendarDayText, { color: theme.greyText }]}>{day}</ThemedText>
+            ))}
+          </View>
+
+          {/* Dummy Calendar Grid */}
+          <View style={styles.gridRow}>
+             {[29, 30, 31, 1, 2, 3, 4].map((num, i) => (
+               <View key={i} style={[styles.gridCell, num === 4 && { backgroundColor: theme.accent, borderRadius: 10 }]}>
+                 <ThemedText style={[
+                   styles.cellText, 
+                   num > 28 ? { color: theme.greyText } : { color: theme.text },
+                   num === 4 && { color: '#FFF', fontWeight: 'bold' }
+                 ]}>{num}</ThemedText>
+                 {num < 5 && num !== 4 && <View style={[styles.dot, { backgroundColor: theme.accent }]} />}
+               </View>
+             ))}
+          </View>
+          <View style={styles.gridRow}>
+             {[5, 6, 7, 8, 9, 10, 11].map((num, i) => (
+               <View key={i} style={styles.gridCell}>
+                 <ThemedText style={[styles.cellText, { color: theme.text }]}>{num}</ThemedText>
+               </View>
+             ))}
+          </View>
+        </NeumorphicView>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: { 
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    paddingBottom: 40,
   },
-  titleContainer: {
+  headerContainer: { 
+    marginBottom: 30,
+  },
+  summaryCard: {
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 30,
+  },
+  summaryHeader: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 30,
   },
+  summaryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#888',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  summaryTime: {
+    fontSize: 32,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 140,
+    paddingTop: 10,
+  },
+  barWrapper: {
+    alignItems: 'center',
+    width: 32,
+  },
+  barBackground: {
+    width: 12,
+    height: 100,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 6,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  barFill: {
+    width: '100%',
+    borderRadius: 6,
+  },
+  dayLabel: {
+    marginTop: 12,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  calendarCard: {
+    borderRadius: 24,
+    padding: 24,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  monthText: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  calendarControls: {
+    flexDirection: 'row',
+  },
+  daysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  calendarDayText: {
+    width: 30,
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  gridRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  gridCell: {
+    width: 32,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cellText: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    position: 'absolute',
+    bottom: 2,
+  }
 });
