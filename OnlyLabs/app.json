@@ -64,7 +64,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-pwa"
     ],
     "experiments": {
       "typedRoutes": true,
