@@ -4,13 +4,15 @@ import { supabase } from '../lib/supabase';
 export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   const [isPWA, setIsPWA] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(true); // Default to Sign In as per design
+  const [isLogin, setIsLogin] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   
   // Form fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -29,7 +31,16 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
 
     checkStandalone();
     window.matchMedia('(display-mode: standalone)').addEventListener('change', checkStandalone);
-    return () => window.matchMedia('(display-mode: standalone)').removeEventListener('change', checkStandalone);
+    
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.matchMedia('(display-mode: standalone)').removeEventListener('change', checkStandalone);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -47,8 +58,6 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         if (!acceptedPrivacy) throw new Error('You must accept the Privacy Policy');
         if (!username) throw new Error('Username is required');
         
-        // 1. Sign up the user in Supabase Auth
-        // Notice we are passing the username inside the user metadata!
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -61,7 +70,6 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         
         if (signUpError) throw signUpError;
 
-        // If email confirmation is enabled, session will be null right after sign up
         if (data.session) {
           onAuthSuccess();
         } else {
@@ -70,6 +78,23 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
       }
     } catch (err: any) {
       setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to sign in with Google');
     } finally {
       setLoading(false);
     }
@@ -97,270 +122,444 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   }
 
   return (
-    <main style={styles.container}>
-      <div style={styles.scrollWrapper}>
-        <h1 style={styles.title}>{isLogin ? 'Sign In' : 'Sign Up'}</h1>
+    <div style={styles.pageWrapper}>
+      <div style={styles.container}>
+        <div style={styles.cardWrapper}>
+          <div style={styles.card}>
+            <div style={styles.formSection}>
+              <form onSubmit={handleAuth} style={styles.form}>
+                <div style={styles.headerContainer}>
+                  <h1 style={styles.title}>
+                    {isLogin ? 'Welcome back' : 'Create Account'}
+                  </h1>
+                  <p style={styles.subtitle}>
+                    {isLogin 
+                      ? 'Login to your OnlyLabs account'
+                      : 'Join the community and start creating today'
+                    }
+                  </p>
+                </div>
 
-        {errorMsg && (
-          <div style={styles.errorBox}>{errorMsg}</div>
-        )}
-        {successMsg && (
-          <div style={styles.successBox}>{successMsg}</div>
-        )}
+                {errorMsg && <div style={styles.errorBox}>{errorMsg}</div>}
+                {successMsg && <div style={styles.successBox}>{successMsg}</div>}
 
-        <form onSubmit={handleAuth} style={styles.form}>
-          
-          {!isLogin && (
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={styles.input}
-              required
-            />
-          )}
+                {!isLogin && (
+                  <div style={styles.fieldGroup}>
+                    <label htmlFor="username" style={styles.label}>Full Name</label>
+                    <input
+                      id="username"
+                      type="text"
+                      placeholder="John Doe"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      style={styles.input}
+                      required
+                    />
+                  </div>
+                )}
 
-          <input
-            type="email"
-            placeholder={isLogin ? "Email Address" : "Email"}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={styles.input}
-            required
-          />
+                <div style={styles.fieldGroup}>
+                  <label htmlFor="email" style={styles.label}>Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={styles.input}
+                    required
+                  />
+                </div>
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={styles.input}
-            required
-          />
+                <div style={styles.fieldGroup}>
+                  <div style={styles.passwordLabelContainer}>
+                    <label htmlFor="password" style={styles.label}>Password</label>
+                    {isLogin && (
+                      <a href="#" style={styles.forgotLink}>Forgot your password?</a>
+                    )}
+                  </div>
+                  <div style={styles.passwordWrapper}>
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{ ...styles.input, paddingRight: '40px' }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={styles.eyeButton}
+                    >
+                      {showPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
 
-          {!isLogin && (
-            <div style={styles.checkboxContainer}>
-              <div 
-                style={{
-                  ...styles.checkbox,
-                  backgroundColor: acceptedPrivacy ? '#000' : 'transparent',
-                  border: acceptedPrivacy ? '2px solid #000' : '2px solid #e0e0e0',
-                }}
-                onClick={() => setAcceptedPrivacy(!acceptedPrivacy)}
-              >
-                {acceptedPrivacy && <span style={{ color: '#fff', fontSize: '12px' }}>✓</span>}
+                {!isLogin && (
+                  <div style={styles.checkboxContainer}>
+                    <div 
+                      style={{
+                        ...styles.checkbox,
+                        backgroundColor: acceptedPrivacy ? '#000' : 'transparent',
+                        border: acceptedPrivacy ? '2px solid #000' : '2px solid #e5e7eb',
+                      }}
+                      onClick={() => setAcceptedPrivacy(!acceptedPrivacy)}
+                      role="checkbox"
+                      aria-checked={acceptedPrivacy}
+                    >
+                      {acceptedPrivacy && <span style={styles.checkmark}>✓</span>}
+                    </div>
+                    <label style={styles.checkboxLabel} onClick={() => setAcceptedPrivacy(!acceptedPrivacy)}>
+                      I agree to the <a href="#" style={styles.link}>Privacy Policy</a> and <a href="#" style={styles.link}>Terms of Service</a>
+                    </label>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  style={{
+                    ...styles.button,
+                    opacity: loading ? 0.7 : 1,
+                    cursor: loading ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {loading ? (
+                    <span style={styles.loadingText}>
+                      <span style={styles.spinner}></span>
+                      {isLogin ? 'Signing in...' : 'Creating account...'}
+                    </span>
+                  ) : (
+                    isLogin ? 'Login' : 'Create account'
+                  )}
+                </button>
+
+                <div style={styles.divider}>
+                  <div style={styles.dividerLine}></div>
+                  <span style={styles.dividerText}>Or continue with</span>
+                  <div style={styles.dividerLine}></div>
+                </div>
+
+                <div style={styles.socialButtons}>
+                  <button 
+                    type="button" 
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
+                    style={{
+                      ...styles.socialButton,
+                      opacity: loading ? 0.7 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                    title="Google"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{ width: '20px', height: '20px' }}>
+                      <path
+                        d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>Google</span>
+                  </button>
+                </div>
+
+                <p style={styles.toggleText}>
+                  {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setIsLogin(!isLogin);
+                      setErrorMsg('');
+                      setSuccessMsg('');
+                    }} 
+                    style={styles.toggleButton}
+                  >
+                    {isLogin ? 'Sign up' : 'Sign in'}
+                  </button>
+                </p>
+              </form>
+            </div>
+
+            {isDesktop && (
+              <div style={styles.imageSection}>
+                <img
+                  src="https://images.unsplash.com/photo-1557821552-17105176677c?w=500&h=500&fit=crop"
+                  alt="OnlyLabs"
+                  style={styles.image}
+                />
               </div>
-              <span style={styles.checkboxText} onClick={() => setAcceptedPrivacy(!acceptedPrivacy)}>
-                By continuing you accept our Privacy Policy
-              </span>
-            </div>
-          )}
-
-          <button type="submit" disabled={loading} style={styles.submitBtn}>
-            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
-          </button>
-
-          {isLogin && (
-            <div style={styles.forgotPassword}>
-              Forgot Password?
-            </div>
-          )}
-        </form>
-
-        <div style={styles.socialSection}>
-          <p style={styles.socialTitle}>Sign in with</p>
-          <div style={styles.socialRow}>
-            {/* Apple Icon */}
-            <div style={styles.socialIcon}>
-              <svg viewBox="0 0 384 512" width="24" height="24">
-                <path fill="#000" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-              </svg>
-            </div>
-            {/* Facebook Icon */}
-            <div style={styles.socialIcon}>
-              <svg viewBox="0 0 512 512" width="24" height="24">
-                <path fill="#1877F2" d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.8 90.7 226.4 209.3 245V327.7h-63V256h63v-54.6c0-62.2 37-96.5 93.7-96.5 27.1 0 55.5 4.8 55.5 4.8v61h-31.3c-30.8 0-40.4 19.1-40.4 38.7V256h68.8l-11 71.7h-57.8V501C413.3 482.4 504 379.8 504 256z"/>
-              </svg>
-            </div>
-            {/* Google Icon */}
-            <div style={styles.socialIcon}>
-              <svg viewBox="0 0 488 512" width="24" height="24">
-                <path fill="#4285F4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
-                <path fill="#34A853" d="M488 261.8c0 16.5-1.6 28.7-3.9 41.4H248v85.3h196.8c-5.8 36.5-42.6 106.9-140.8 106.9-84.6 0-153.7-70.1-153.7-156.6 0-139.4 164.2-203.4 252.5-81.8l-67.5-64.9z" opacity=".8"/>
-                <path fill="#FBBC05" d="M248 137.6c36.1 0 68.3 12.8 93.6 35.8l67.5-64.9C369.3 67.5 313.3 43 248 43 147.2 43 60.5 106.6 23.3 194.2l82.7 64C126.5 186.2 182.1 137.6 248 137.6z"/>
-                <path fill="#EA4335" d="M248 468c46.9 0 88.2-15.5 119.5-41.8l-82.3-64.1c-22.3 15-51.1 23.9-85.7 23.9-65.9 0-121.5-48.6-142-120.6l-82.7 64C60.5 417 147.2 468 248 468z"/>
-              </svg>
-            </div>
+            )}
           </div>
-        </div>
 
-        <button onClick={() => {
-          setIsLogin(!isLogin);
-          setErrorMsg('');
-          setSuccessMsg('');
-        }} style={styles.toggleBtn}>
-          {isLogin ? (
-            <>Don't have an account? <span style={styles.linkText}>Sign Up</span></>
-          ) : (
-            <>Already have an account? <span style={styles.linkText}>Sign In</span></>
-          )}
-        </button>
+          <p style={styles.disclaimer}>
+            By clicking continue, you agree to our <a href="#" style={styles.link}>Terms of Service</a> and <a href="#" style={styles.link}>Privacy Policy</a>.
+          </p>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
 
-const styles = {
-  container: {
-    backgroundColor: '#ffffff',
+const styles: { [key: string]: React.CSSProperties } = {
+  pageWrapper: {
+    display: 'flex',
     minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
-  },
-  scrollWrapper: {
-    flex: 1,
-    display: 'flex',
+    width: '100%',
     flexDirection: 'column' as const,
     alignItems: 'center',
-    padding: '60px 32px 40px 32px',
-    maxWidth: '450px',
+    justifyContent: 'center',
+    backgroundColor: '#f3f4f6',
+    padding: '24px 16px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    margin: 0,
+    boxSizing: 'border-box' as const,
+  },
+  container: {
+    width: '100%',
+    maxWidth: '928px',
     margin: '0 auto',
+  },
+  cardWrapper: {
     width: '100%',
   },
-  title: {
-    fontSize: '32px',
-    fontWeight: 700,
-    marginBottom: '40px',
-    color: '#000',
-    textAlign: 'center' as const,
-    marginTop: '40px',
+  card: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    overflow: 'hidden',
+    borderRadius: '8px',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
-  form: {
-    width: '100%',
+  formSection: {
+    padding: '40px',
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '16px'
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '16px',
+  },
+  headerContainer: {
+    textAlign: 'center' as const,
+    marginBottom: '8px',
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: 700,
+    color: '#111827',
+    margin: 0,
+    marginBottom: '8px',
+  },
+  subtitle: {
+    fontSize: '14px',
+    color: '#6b7280',
+    margin: 0,
+    lineHeight: '1.5',
+  },
+  fieldGroup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '6px',
+  },
+  label: {
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#1f2937',
   },
   input: {
-    width: '100%',
-    padding: '18px 20px',
-    borderRadius: '12px',
-    border: 'none',
-    fontSize: '15px',
+    padding: '10px 12px',
+    borderRadius: '6px',
+    border: '1px solid #d1d5db',
+    fontSize: '14px',
     outline: 'none',
-    backgroundColor: '#FAFAFA',
-    color: '#333',
+    backgroundColor: '#ffffff',
+    color: '#111827',
     fontWeight: '500',
-    boxSizing: 'border-box' as const
+    boxSizing: 'border-box' as const,
+    transition: 'all 0.2s ease',
+  },
+  passwordLabelContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  passwordWrapper: {
+    position: 'relative' as const,
+  },
+  eyeButton: {
+    position: 'absolute' as const,
+    right: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '16px',
+    padding: 0,
+    opacity: 0.6,
+  },
+  forgotLink: {
+    fontSize: '12px',
+    color: '#6b7280',
+    textDecoration: 'underline',
+    cursor: 'pointer',
   },
   checkboxContainer: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginTop: '4px',
-    marginBottom: '12px',
-    cursor: 'pointer'
+    alignItems: 'flex-start',
+    gap: '10px',
   },
   checkbox: {
-    width: '22px',
-    height: '22px',
-    borderRadius: '50%',
+    width: '18px',
+    height: '18px',
+    borderRadius: '4px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0
+    flexShrink: 0,
+    transition: 'all 0.2s',
+    marginTop: '2px',
+    cursor: 'pointer',
   },
-  checkboxText: {
-    fontSize: '13px',
-    color: '#aaa',
-    fontWeight: '500'
-  },
-  submitBtn: {
-    width: '100%',
-    padding: '18px',
-    marginTop: '12px',
-    border: 'none',
-    borderRadius: '12px',
-    backgroundColor: '#000',
-    color: '#fff',
+  checkmark: {
+    color: '#ffffff',
+    fontSize: '12px',
     fontWeight: 'bold',
-    fontSize: '16px',
-    cursor: 'pointer',
   },
-  forgotPassword: {
-    textAlign: 'center' as const,
+  checkboxLabel: {
     fontSize: '13px',
-    color: '#666',
-    marginTop: '12px',
+    color: '#6b7280',
+    fontWeight: 500,
+    lineHeight: '1.5',
     cursor: 'pointer',
-    fontWeight: '500'
   },
-  socialSection: {
-    marginTop: '60px',
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center'
-  },
-  socialTitle: {
-    fontSize: '15px',
+  button: {
+    padding: '10px 16px',
+    borderRadius: '6px',
+    border: 'none',
+    backgroundColor: '#000000',
+    color: '#ffffff',
     fontWeight: 600,
-    color: '#333',
-    marginBottom: '24px'
+    fontSize: '14px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    marginTop: '4px',
   },
-  socialRow: {
+  loadingText: {
     display: 'flex',
-    gap: '30px',
-    justifyContent: 'center'
+    alignItems: 'center',
+    gap: '8px',
   },
-  socialIcon: {
-    width: '45px',
-    height: '45px',
-    backgroundColor: '#fff',
+  spinner: {
+    display: 'inline-block',
+    width: '12px',
+    height: '12px',
+    border: '2px solid rgba(255, 255, 255, 0.3)',
+    borderTop: '2px solid #ffffff',
     borderRadius: '50%',
+  },
+  divider: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    margin: '8px 0',
+  },
+  dividerLine: {
+    flex: 1,
+    height: '1px',
+    backgroundColor: '#e5e7eb',
+  },
+  dividerText: {
+    fontSize: '12px',
+    color: '#9ca3af',
+    fontWeight: 600,
+    whiteSpace: 'nowrap' as const,
+  },
+  socialButtons: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '10px',
+  },
+  socialButton: {
+    padding: '10px 16px',
+    borderRadius: '6px',
+    border: '1px solid #e5e7eb',
+    backgroundColor: '#ffffff',
+    color: '#1f2937',
+    cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    cursor: 'pointer',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+    gap: '8px',
+    transition: 'all 0.2s',
+    fontWeight: 600,
+    fontSize: '14px',
   },
-  toggleBtn: {
+  toggleText: {
+    fontSize: '13px',
+    color: '#6b7280',
+    textAlign: 'center' as const,
+    margin: 0,
+    fontWeight: 500,
+  },
+  toggleButton: {
     background: 'none',
     border: 'none',
-    color: '#888',
-    marginTop: 'auto',
-    paddingTop: '60px',
-    fontSize: '15px',
+    color: '#1f2937',
+    fontWeight: 700,
     cursor: 'pointer',
-    fontWeight: '500'
+    fontSize: '13px',
+    textDecoration: 'underline',
+    padding: 0,
   },
-  linkText: {
-    color: '#000',
-    fontWeight: '700',
-    textDecoration: 'underline'
+  imageSection: {
+    position: 'relative' as const,
+    overflow: 'hidden',
+    backgroundColor: '#f3f4f6',
+    minHeight: '300px',
+    display: 'none',
+  },
+  image: {
+    position: 'absolute' as const,
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover' as const,
+    filter: 'brightness(0.8) grayscale(20%)',
+  },
+  disclaimer: {
+    fontSize: '12px',
+    color: '#9ca3af',
+    textAlign: 'center' as const,
+    margin: '16px 0 0 0',
+    lineHeight: '1.5',
+  },
+  link: {
+    color: '#6b7280',
+    textDecoration: 'underline',
+    cursor: 'pointer',
   },
   errorBox: {
-    backgroundColor: '#FFEbeb', 
-    color: '#FF6B6B', 
-    padding: '14px', 
-    borderRadius: '12px', 
-    marginBottom: '20px', 
-    width: '100%', 
-    fontSize: '14px', 
+    backgroundColor: '#fee2e2',
+    color: '#991b1b',
+    padding: '12px 14px',
+    borderRadius: '6px',
+    fontSize: '13px',
     textAlign: 'center' as const,
-    fontWeight: '500'
+    fontWeight: 500,
+    border: '1px solid #fecaca',
   },
   successBox: {
-    backgroundColor: '#E6F4EA', 
-    color: '#1E4620', 
-    padding: '14px', 
-    borderRadius: '12px', 
-    marginBottom: '20px', 
-    width: '100%', 
-    fontSize: '14px', 
+    backgroundColor: '#dcfce7',
+    color: '#166534',
+    padding: '12px 14px',
+    borderRadius: '6px',
+    fontSize: '13px',
     textAlign: 'center' as const,
-    fontWeight: '500'
-  }
+    fontWeight: 500,
+    border: '1px solid #bbf7d0',
+  },
 };
