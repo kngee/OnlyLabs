@@ -9,7 +9,7 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   // Form fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   
@@ -46,7 +46,7 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         onAuthSuccess();
       } else {
         if (!acceptedPrivacy) throw new Error('You must accept the Privacy Policy');
-        if (!fullName) throw new Error('Full Name is required');
+        if (!username) throw new Error('Username is required');
         
         // 1. Sign up the user in Supabase Auth
         const { data, error: signUpError } = await supabase.auth.signUp({
@@ -55,7 +55,7 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
           phone: phone || undefined,
           options: {
             data: {
-              full_name: fullName,
+              username: username,
               phone: phone
             }
           }
@@ -70,9 +70,7 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
             .upsert([
               { 
                 id: data.user.id, 
-                full_name: fullName,
-                email: email,
-                phone: phone
+                username: username
               }
             ]);
             
@@ -133,9 +131,9 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
           {!isLogin && (
             <input
               type="text"
-              placeholder="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               style={styles.input}
               required
             />
