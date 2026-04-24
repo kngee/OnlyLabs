@@ -1,10 +1,40 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import { Clock, ListTodo, Plus, BarChart2, Settings } from 'lucide-react';
 import Home from './pages/Home';
 import Analytics from './pages/Analytics';
 import Friends from './pages/Friends';
+import Auth from './pages/Auth';
+import { supabase } from './lib/supabase';
+import type { Session } from '@supabase/supabase-js';
 
 export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>Loading...</div>;
+  }
+
+  if (!session) {
+    return <Auth onAuthSuccess={() => {}} />;
+  }
+
   return (
     <Router>
       <div style={{ backgroundColor: '#f0f4f9', width: '100vw', maxWidth: '450px', position: 'relative', minHeight: '100vh', paddingBottom: '90px', margin: '0 auto', boxShadow: '0 0 20px rgba(0,0,0,0.05)' }}>
