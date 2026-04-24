@@ -16,8 +16,8 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
         || ('standalone' in navigator && (navigator as any).standalone === true);
       
-      // FOR DEV: comment out the next line to bypass PWA requirement when testing locally
-      // setIsPWA(isStandalone); 
+      // FOR DEV: bypass PWA requirement when testing locally by setting to true
+      setIsPWA(import.meta.env.DEV ? true : isStandalone);
     };
 
     checkStandalone();
