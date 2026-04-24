@@ -10,9 +10,8 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [phone, setPhone] = useState('');
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
-  
+
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -52,11 +51,9 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          phone: phone || undefined,
           options: {
             data: {
-              username: username,
-              phone: phone
+              username: username
             }
           }
         });
@@ -141,22 +138,12 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
 
           <input
             type="email"
-            placeholder={isLogin ? "Phone / Email" : "Email"}
+            placeholder={isLogin ? "Email Address" : "Email"}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             style={styles.input}
             required
           />
-          
-          {!isLogin && (
-            <input
-              type="tel"
-              placeholder="Phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={styles.input}
-            />
-          )}
 
           <input
             type="password"
