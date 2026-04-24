@@ -1,0 +1,4 @@
+[build]
+  base = "only-labs"
+  command = "npm run build"
+  publish = "dist"
