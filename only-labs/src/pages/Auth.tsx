@@ -48,6 +48,7 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         if (!username) throw new Error('Username is required');
         
         // 1. Sign up the user in Supabase Auth
+        // Notice we are passing the username inside the user metadata!
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -59,24 +60,8 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         });
         
         if (signUpError) throw signUpError;
-        
-        // 2. Add an entry to the public.profiles database table directly
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert([
-              { 
-                id: data.user.id, 
-                username: username
-              }
-            ]);
-            
-          if (profileError) {
-            console.error("Profile insertion error:", profileError);
-            // It might fail if RLS blocks it, but we log the error for now
-          }
-        }
 
+        // If email confirmation is enabled, session will be null right after sign up
         if (data.session) {
           onAuthSuccess();
         } else {
