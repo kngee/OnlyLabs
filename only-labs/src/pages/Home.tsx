@@ -50,9 +50,6 @@ export default function Home() {
 
   return (
     <main style={{ 
-      backgroundColor: '#ffffff', 
-      minHeight: '100vh', 
-      padding: '24px',
       color: '#1a1a1a',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
     }}>
@@ -67,57 +64,64 @@ export default function Home() {
         </button>
       </header>
 
-      {/* Task Card */}
-      <div style={styles.taskCard}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={styles.taskIconWrapper}>
-            <Code size={20} color="#fff" />
+      <div className="home-layout">
+        
+        <div className="timer-section">
+          {/* Timer Circle */}
+          <div style={styles.timerWrapper}>
+            <svg width="260" height="260" viewBox="0 0 260 260" style={{ transform: 'rotate(-90deg)' }}>
+              {/* Background circle */}
+              <circle cx="130" cy="130" r={radius} stroke="#f0f0f5" strokeWidth="12" fill="none" />
+              {/* Progress circle */}
+              <circle cx="130" cy="130" r={radius} stroke="#537DF5" strokeWidth="12" fill="none" strokeLinecap="round" style={{ strokeDasharray: circumference, strokeDashoffset: dashoffset, transition: 'stroke-dashoffset 1s linear' }} />
+              {/* Knob */}
+              <circle cx="130" cy="130" r="10" fill="#537DF5" style={{ transformOrigin: '130px 130px', transform: `rotate(${progress * 360}deg) translateX(${radius}px)`, transition: 'transform 1s linear' }} />
+            </svg>
+
+            {/* Timer Text */}
+            <div style={styles.timerTextContainer}>
+              <span style={styles.timerTime}>{formatTime(timeLeft)}</span>
+              <span style={styles.timerSession}>{session} of {totalSessions} sessions</span>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0' }}>{currentTask.title}</h2>
-            <p style={{ fontSize: '14px', color: '#8e8e93', margin: 0 }}>{currentTask.totalTimeMins} mins</p>
+
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <p style={{ fontSize: '14px', color: '#8e8e93' }}>Stay focus for {currentTask.sessionDurationMins} minutes</p>
+          </div>
+
+          {/* Controls */}
+          <div style={styles.controlsWrapper}>
+            <button onClick={resetTimer} style={{ ...styles.controlBtn, ...styles.secondaryControl }}>
+              <RotateCcw size={20} color="#a1a1aa" />
+            </button>
+            <button onClick={toggleTimer} style={styles.mainControlBtn}>
+              {isActive ? <Pause size={28} color="#fff" fill="#fff" /> : <Play size={28} color="#fff" fill="#fff" />}
+            </button>
+            <button onClick={stopTimer} style={{ ...styles.controlBtn, ...styles.secondaryControl }}>
+              <Square size={20} color="#a1a1aa" fill="#a1a1aa" />
+            </button>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0' }}>{session}/{totalSessions}</p>
-          <p style={{ fontSize: '14px', color: '#8e8e93', margin: 0 }}>{currentTask.sessionDurationMins} mins</p>
+
+        <div className="task-section">
+          {/* Task Card */}
+          <div style={styles.taskCard}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={styles.taskIconWrapper}>
+                <Code size={20} color="#fff" />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0' }}>{currentTask.title}</h2>
+                <p style={{ fontSize: '14px', color: '#8e8e93', margin: 0 }}>{currentTask.totalTimeMins} mins</p>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '16px', fontWeight: 600, margin: '0 0 4px 0' }}>{session}/{totalSessions}</p>
+              <p style={{ fontSize: '14px', color: '#8e8e93', margin: 0 }}>{currentTask.sessionDurationMins} mins</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Timer Circle */}
-      <div style={styles.timerWrapper}>
-        <svg width="260" height="260" viewBox="0 0 260 260" style={{ transform: 'rotate(-90deg)' }}>
-          {/* Background circle */}
-          <circle cx="130" cy="130" r={radius} stroke="#f0f0f5" strokeWidth="12" fill="none" />
-          {/* Progress circle */}
-          <circle cx="130" cy="130" r={radius} stroke="#537DF5" strokeWidth="12" fill="none" strokeLinecap="round" style={{ strokeDasharray: circumference, strokeDashoffset: dashoffset, transition: 'stroke-dashoffset 1s linear' }} />
-          {/* Knob */}
-          <circle cx="130" cy="130" r="10" fill="#537DF5" style={{ transformOrigin: '130px 130px', transform: `rotate(${progress * 360}deg) translateX(${radius}px)`, transition: 'transform 1s linear' }} />
-        </svg>
-
-        {/* Timer Text */}
-        <div style={styles.timerTextContainer}>
-          <span style={styles.timerTime}>{formatTime(timeLeft)}</span>
-          <span style={styles.timerSession}>{session} of {totalSessions} sessions</span>
-        </div>
-      </div>
-
-      {/* Stay Focus Text */}
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <p style={{ fontSize: '14px', color: '#8e8e93' }}>Stay focus for {currentTask.sessionDurationMins} minutes</p>
-      </div>
-
-      {/* Controls */}
-      <div style={styles.controlsWrapper}>
-        <button onClick={resetTimer} style={{ ...styles.controlBtn, ...styles.secondaryControl }}>
-          <RotateCcw size={20} color="#a1a1aa" />
-        </button>
-        <button onClick={toggleTimer} style={styles.mainControlBtn}>
-          {isActive ? <Pause size={28} color="#fff" fill="#fff" /> : <Play size={28} color="#fff" fill="#fff" />}
-        </button>
-        <button onClick={stopTimer} style={{ ...styles.controlBtn, ...styles.secondaryControl }}>
-          <Square size={20} color="#a1a1aa" fill="#a1a1aa" />
-        </button>
       </div>
     </main>
   );

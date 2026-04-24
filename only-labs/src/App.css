@@ -1,184 +1,159 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
-
-.hero {
+.app-container {
+  background-color: #ffffff;
   position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-#center {
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
+.main-content {
+  flex: 1;
   width: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
+/* Mobile Nav Styles */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background-color: #FFFFFF;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -4px 30px rgba(0,0,0,0.04);
+  z-index: 50;
+  transition: all 0.3s ease;
+}
+
+.nav-item {
+  color: #b0b0b8;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.nav-item.active {
+  color: #537DF5;
+  background-color: rgba(83, 125, 245, 0.1);
+}
+
+.fab-wrapper {
+  position: relative;
+  top: -24px;
+}
+
+.fab-button {
+  width: 60px;
+  height: 60px;
+  background-color: #537DF5;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(83, 125, 245, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.fab-button:hover {
+  transform: scale(1.05);
+}
+
+/* Home.tsx specific responsive grid */
+.home-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.timer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-section {
+  width: 100%;
+}
+
+/* Responsive Breakpoints for Tablets and Desktop */
+@media (min-width: 768px) {
+  body {
+    background-color: #ecf0f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+  
+  .app-container {
+    flex-direction: row;
+    max-width: 1000px;
+    width: 90vw;
+    height: 85vh;
+    min-height: 650px;
+    border-radius: 40px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.1);
   }
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
+  .main-content {
+    background-color: #f8fafc;
+    padding: 40px;
   }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+
+  .bottom-nav {
+    position: static;
+    width: 110px;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    gap: 40px;
+    border-radius: 30px 0 0 30px;
+    background-color: #ffffff;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.02);
+  }
+
+  .fab-wrapper {
+    top: 0;
+  }
+
+  .home-layout {
+    flex-direction: row;
+    gap: 40px;
+    align-items: center;
+    justify-content: space-evenly;
+    height: calc(100% - 60px);
+  }
+
+  .timer-section {
+    flex: 1.2;
+    transform: scale(1.1); /* Make the timer slightly larger on desktop */
+  }
+
+  /* Make the "Current Task" card sit next to the timer instead of above it */
+  .task-section {
+    flex: 1;
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-container {
+    width: 100vw;
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+  .main-content {
+    background-color: #ffffff;
   }
 }
